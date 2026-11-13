@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gevoelskompas</title>
+<meta name="description" content="Drie keer per dag inchecken met de vier B's: bang, boos, blij en bedroefd.">
+<meta name="theme-color" content="#F4F2EE">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gevoelskompas">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: one calm phone column, four tabs fixed at the bottom, check-in as a full-screen sheet. */
+:root{
+  --bg:#F4F2EE; --surface:#FFFFFF; --sunk:#E9E6DF; --ink:#15171C; --muted:#5E6168; --line:#E4E1DA; --invert:#15171C; --invert-fg:#F4F2EE; --invert-muted:#C3C5CB;
+  --bang:#4F55C9; --boos:#C8461F; --blij:#E9B53C; --bedroefd:#2C6283;
+  --bang-tint:#E7E8F8; --boos-tint:#F7E3DB; --blij-tint:#FBF0D3; --bedroefd-tint:#DCE8EF;
+  --focus:#4F55C9;
+  --display:'Space Grotesk', 'Avenir Next', system-ui, sans-serif;
+  --text:'Inter', -apple-system, system-ui, sans-serif;
+}
+:root{color-scheme:light}
+html,body{height:100%}
+body{margin:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand .mark{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:-0.02em}
+.brand .date{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.done{background:var(--e);color:var(--e-fg);border-radius:28px;padding:28px 22px;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.done .check{width:56px;height:56px;border-radius:28px;background:var(--e-fg);color:var(--e);display:flex;align-items:center;justify-content:center}
+.done h2{font-size:34px;line-height:1.05}
+.done p{margin:0;font-size:15px;opacity:.92}
+.progress3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.progress3 div{background:var(--surface);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:500}
+.progress3 span.sq{height:28px;border-radius:9px;background:var(--e)}
+.progress3 span.sq.leeg{background:transparent;border:1.5px dashed var(--line)}
+body{background:var(--bg);color:var(--ink);font-family:var(--text);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:-0.02em;text-wrap:balance;margin:0}
+.e-bang{--e:var(--bang);--e-fg:#FFFFFF;--e-tint:var(--bang-tint)}
+.e-boos{--e:var(--boos);--e-fg:#FFFFFF;--e-tint:var(--boos-tint)}
+.e-blij{--e:var(--blij);--e-fg:#15171C;--e-tint:var(--blij-tint)}
+.e-bedroefd{--e:var(--bedroefd);--e-fg:#FFFFFF;--e-tint:var(--bedroefd-tint)}
+
+.app{max-width:480px;margin:0 auto;min-height:100%;padding-left:max(18px, env(safe-area-inset-left,0px));padding-right:max(18px, env(safe-area-inset-right,0px));padding-top:calc(20px + env(safe-area-inset-top,0px));padding-bottom:120px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.title{font-size:32px;line-height:1.08}
+.sub{color:var(--muted);font-size:14px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border-radius:20px;padding:16px}
+
+/* Today */
+.hero{background:var(--invert);color:var(--invert-fg);border-radius:24px;padding:18px 20px;display:flex;gap:18px;align-items:center}
+.hero b{font-family:var(--display);font-size:18px;font-weight:600;display:block}
+.hero span{color:var(--invert-muted);font-size:13px}
+.ring-track{stroke:var(--invert-muted);opacity:.45}
+.moment{display:flex;gap:14px;align-items:flex-start;width:100%;text-align:left;border:none;background:var(--surface);border-radius:20px;padding:16px}
+.moment .sw{width:44px;height:44px;border-radius:14px;background:var(--e);flex-shrink:0}
+.moment .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.moment .row{display:flex;justify-content:space-between;gap:10px}
+.moment .row strong{font-weight:600}
+.moment .meta{font-size:13px;color:var(--muted)}
+.moment .note{font-size:14px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.moment.empty{background:transparent;border:1.5px dashed var(--line);align-items:center}
+.moment.empty .sw{background:var(--sunk);display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.pill{height:44px;padding:0 18px;border-radius:22px;border:none;font-weight:600;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.pill.dark{background:var(--invert);color:var(--invert-fg)}
+.pill.light{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.pill.ghost{background:transparent;color:var(--muted)}
+
+/* Nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:8px max(12px, env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px, env(safe-area-inset-left,0px));z-index:5}
+nav.tabs .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:48px;justify-content:center;text-decoration:none;color:var(--muted);font-size:11px;font-weight:500}
+nav.tabs a[aria-current="page"]{color:var(--ink);font-weight:600}
+
+/* Segmented */
+.seg{background:var(--sunk);border-radius:14px;padding:4px;display:grid;gap:4px}
+.seg button{height:38px;border:none;border-radius:10px;background:transparent;color:var(--muted);font-weight:500;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg button.alarm[aria-pressed="true"]{background:var(--invert);color:var(--invert-fg)}
+
+/* Overview */
+.grid7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.day{display:flex;flex-direction:column;align-items:center;gap:5px}
+.day small{font-size:11px;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.dot{width:100%;max-width:30px;aspect-ratio:1;border-radius:9px;background:var(--e);display:block}
+.dot.none{background:transparent;border:1.5px solid var(--line)}
+.dot.future{background:transparent;border:1.5px dashed var(--line);opacity:.6}
+.bar{display:flex;align-items:center;gap:10px}
+.bar .lbl{width:78px;font-size:14px}
+.bar .trk{flex:1;height:12px;border-radius:6px;background:var(--sunk);overflow:hidden}
+.bar .fill{height:100%;border-radius:6px;background:var(--e)}
+.bar .n{width:30px;text-align:right;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.insight{background:var(--invert);color:var(--invert-fg);border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.insight .eyebrow{color:var(--invert-muted)}
+.notecard{background:var(--surface);border-radius:16px;padding:14px;border-left:4px solid var(--e);display:flex;flex-direction:column;gap:4px}
+.notecard .meta{font-size:12px;color:var(--muted);font-weight:600}
+.empty-state{border:1.5px dashed var(--line);border-radius:20px;padding:20px;color:var(--muted);font-size:14px}
+
+/* Forms */
+.field{display:flex;flex-direction:column;gap:8px}
+.field label,.lbl-strong{font-weight:600;font-size:15px}
+textarea,input[type=text],input[type=date],select{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:12px 14px;font-size:16px;line-height:1.45}
+textarea{resize:none;min-height:96px}
+input[type=time]{height:42px;border:none;background:var(--sunk);border-radius:12px;padding:0 10px;font-family:var(--display);font-size:20px;font-weight:600;min-width:104px}
+.toggle{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:54px;border-bottom:1px solid var(--line)}
+.toggle:last-child{border-bottom:none}
+.toggle input{width:22px;height:22px;accent-color:var(--ink);flex-shrink:0}
+.toggle small{display:block;color:var(--muted);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{height:40px;padding:0 15px;border-radius:20px;border:1px solid var(--line);background:var(--surface);font-size:14px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--invert);color:var(--invert-fg);border-color:var(--invert)}
+
+/* Sheet */
+.sheet{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet .in{max-width:480px;margin:0 auto;min-height:100%;padding:calc(18px + env(safe-area-inset-top,0px)) max(18px, env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(18px, env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:20px}
+.sheet-top{display:flex;justify-content:space-between;align-items:center}
+.iconbtn{width:44px;height:44px;border-radius:22px;border:none;background:var(--surface);display:flex;align-items:center;justify-content:center}
+.emogrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.emo{height:104px;border-radius:22px;padding:16px;border:2px solid transparent;background:var(--e-tint);color:var(--ink);display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:2px;text-align:left;transition:transform .15s ease, box-shadow .15s ease}
+.emo strong{font-family:var(--display);font-size:22px;font-weight:600}
+.emo span{font-size:12px;opacity:.85}
+.emo[aria-pressed="true"]{background:var(--e);color:var(--e-fg);box-shadow:0 10px 22px color-mix(in srgb, var(--e) 35%, transparent);transform:translateY(-1px)}
+.lvls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.lvls button{height:48px;border-radius:14px;border:none;background:var(--surface);color:var(--muted);font-weight:600;font-size:16px}
+.lvls button.on{background:var(--e, var(--invert));color:var(--e-fg, var(--invert-fg))}
+.summary-chip{background:var(--e);color:var(--e-fg);border-radius:22px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.summary-chip strong{font-family:var(--display);font-size:26px;font-weight:600;display:block}
+.pips{display:flex;gap:4px}
+.pips i{width:10px;height:28px;border-radius:5px;background:currentColor;opacity:.3}
+.pips i.on{opacity:1}
+.actions{display:flex;gap:10px;margin-top:auto}
+.actions .grow{flex:1;height:56px;border-radius:28px;font-size:16px}
+.actions .pill{height:56px;border-radius:28px}
+.pill:disabled{opacity:.4;cursor:not-allowed}
+.confirm{background:var(--surface);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+
+/* Summary preview */
+.preview{background:var(--surface);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.stackbar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--sunk)}
+.stackbar span{background:var(--e)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:5px;background:var(--e);margin-right:6px}
+.range{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--invert);color:var(--invert-fg);padding:12px 18px;border-radius:22px;font-weight:600;font-size:14px;z-index:30;max-width:calc(100% - 32px);text-align:center}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app" id="view" aria-live="polite">
+  <p class="eyebrow">Gevoelskompas</p>
+  <h1 class="title">Even laden…</h1>
+</div>
+
+<nav class="tabs" aria-label="Hoofdmenu"><div class="in">
+  <a href="#vandaag" data-tab="vandaag"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Vandaag</a>
+  <a href="#overzicht" data-tab="overzicht"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Overzicht</a>
+  <a href="#samenvatting" data-tab="samenvatting"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h5"/></svg>Samenvatting</a>
+  <a href="#herinneringen" data-tab="herinneringen"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>Herinneringen</a>
+</div></nav>
+
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-label="Check-in"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(() => {
+const EMO = {
+  bang:{naam:'Bang', sub:'onrustig, gespannen', hex:'#4F55C9'},
+  boos:{naam:'Boos', sub:'geprikkeld, begrensd', hex:'#C8461F'},
+  blij:{naam:'Blij', sub:'licht, energiek', hex:'#E9B53C'},
+  bedroefd:{naam:'Bedroefd', sub:'zwaar, verdrietig', hex:'#2C6283'}
+};
+const EMO_KEYS = ['bang','boos','blij','bedroefd'];
+const MOM = [{id:'ochtend',naam:'Ochtend'},{id:'middag',naam:'Middag'},{id:'avond',naam:'Avond'}];
+const LICHAAM = ['Hoofd','Keel','Borst','Buik','Schouders','Handen'];
+const NIVEAU = ['','Heel licht','Licht','Merkbaar','Sterk','Overweldigend'];
+const DEF = {tijden:{ochtend:'08:30',middag:'13:00',avond:'21:00'}, vorm:{ochtend:'melding',middag:'melding',avond:'wekker'}, naam:''};
+const LOGO = s => `<svg width="${s}" height="${s}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="#E4E1DA" stroke-width="2"/><path d="M20 2 A18 18 0 0 1 38 20 L20 20 Z" fill="#E9B53C"/><path d="M38 20 A18 18 0 0 1 20 38 L20 20 Z" fill="#2C6283"/><path d="M20 38 A18 18 0 0 1 2 20 L20 20 Z" fill="#C8461F"/><path d="M2 20 A18 18 0 0 1 20 2 L20 20 Z" fill="#4F55C9"/><circle cx="20" cy="20" r="7" fill="#F4F2EE"/></svg>`;
+
+const S = {days:{}, settings:JSON.parse(JSON.stringify(DEF)), view:'vandaag', periode:'week',
+  sam:{keuze:'deze-week', van:'', tot:'', notities:true, lichaam:true}, draft:null, mode:'lokaal'};
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const key = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+const fmtLong = d => d.toLocaleDateString('nl-NL',{weekday:'long', day:'numeric', month:'long'});
+const fmtShort = d => d.toLocaleDateString('nl-NL',{weekday:'short', day:'numeric', month:'short'});
+const fmtDate = d => d.toLocaleDateString('nl-NL',{day:'numeric', month:'long', year:'numeric'});
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const nowTime = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const currentMoment = () => { const h = new Date().getHours(); return h < 12 ? 'ochtend' : h < 17 ? 'middag' : 'avond'; };
+const entry = (k, m) => S.days[k]?.[m] || null;
+function toast(t){ const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => el.hidden = true, 2200); }
+
+/* ---------- storage: on this device only ---------- */
+function lsGet(){ try { return JSON.parse(localStorage.getItem('gevoelskompas-v1') || 'null'); } catch(e){ return null; } }
+function lsSet(){ try { localStorage.setItem('gevoelskompas-v1', JSON.stringify({days:S.days, settings:S.settings})); return true; } catch(e){ toast('Opslaan lukte niet. Is je opslag vol?'); return false; } }
+function applyData(data){
+  S.days = data.days || {};
+  const st = data.settings || {};
+  S.settings = {tijden:Object.assign({}, DEF.tijden, st.tijden), vorm:Object.assign({}, DEF.vorm, st.vorm), naam:st.naam ?? ''};
+}
+function init(){
+  const local = lsGet();
+  if (local) applyData(local);
+  try { if (navigator.storage?.persist) navigator.storage.persist(); } catch(e){}
+  route();
+}
+async function saveDay(k){
+  if (S.days[k] && !Object.keys(S.days[k]).length) delete S.days[k];
+  lsSet();
+}
+async function shareFile(blob, filename, title){
+  const file = new File([blob], filename, {type: blob.type});
+  if (navigator.canShare && navigator.canShare({files:[file]})){
+    try { await navigator.share({files:[file], title}); return true; }
+    catch(e){ if (e && e.name === 'AbortError') return false; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  return true;
+}
+async function backup(){
+  const data = JSON.stringify({app:'gevoelskompas', versie:1, gemaakt:new Date().toISOString(), days:S.days, settings:S.settings}, null, 1);
+  await shareFile(new Blob([data], {type:'application/json'}), `Gevoelskompas back-up ${key(today())}.json`, 'Gevoelskompas back-up');
+}
+function restore(file){
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!d || typeof d.days !== 'object') throw 0;
+      const merged = Object.assign({}, S.days);
+      Object.entries(d.days).forEach(([k, mom]) => { merged[k] = Object.assign({}, merged[k] || {}, mom); });
+      applyData({days:merged, settings:d.settings || S.settings});
+      lsSet(); render();
+      toast(`Back-up teruggezet: ${Object.keys(d.days).length} dagen`);
+    } catch(e){ toast('Dit bestand is geen Gevoelskompas-back-up.'); }
+  };
+  r.readAsText(file);
+}
+async function saveSettings(){
+  lsSet();
+  if (!db) return;
+  try { await db.doc(`data/users/${uid}/instellingen`).set({soort:'instellingen', ...S.settings}); } catch(e){ toast('Opslaan lukte niet. Probeer het zo nog eens.'); }
+}
+
+/* ---------- routing ---------- */
+const VIEWS = ['vandaag','overzicht','samenvatting','herinneringen'];
+function route(){
+  const h = location.hash.replace('#','');
+  if (MOM.some(m => m.id === h)){ S.view = 'vandaag'; render(); openCheckin(key(today()), h); return; }
+  S.view = VIEWS.includes(h) ? h : 'vandaag';
+  render();
+}
+window.addEventListener('hashchange', route);
+
+function render(){
+  document.querySelectorAll('nav.tabs a').forEach(a => { if (a.dataset.tab === S.view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  const v = $('#view');
+  const brand = `<div class="brand"><span class="mark">${LOGO(30)}Gevoelskompas</span><span class="date">${today().toLocaleDateString('nl-NL',{day:'numeric', month:'short'})}</span></div>`;
+  v.innerHTML = brand + ({vandaag:viewToday, overzicht:viewOverview, samenvatting:viewSummary, herinneringen:viewReminders})[S.view]();
+}
+
+/* ---------- Vandaag ---------- */
+function viewToday(){
+  const t = today(), k = key(t), h = new Date().getHours();
+  const greet = h < 6 ? 'Goedenacht' : h < 12 ? 'Goedemorgen' : h < 18 ? 'Goedemiddag' : 'Goedenavond';
+  const done = MOM.filter(m => entry(k, m.id)).length;
+  const open = MOM.filter(m => !entry(k, m.id));
+  const cur = currentMoment();
+  const next = open.find(m => m.id === cur) || open[0];
+  const headline = done === 3 ? 'Alle drie de momenten staan erin' : done === 0 ? 'Je dag begint hier' : `Nog ${3-done} ${3-done === 1 ? 'moment' : 'momenten'} vandaag`;
+  const subline = done === 3 ? 'Mooi bijgehouden. Kijk bij Overzicht hoe je week loopt.' : `Volgende: ${next.naam.toLowerCase()} om ${S.settings.tijden[next.id]}.`;
+  const C = 2*Math.PI*27, dash = (done/3)*C;
+  return `
+    <div class="stack" style="gap:4px"><span class="sub">${cap(fmtLong(t))}</span><h1 class="title">${greet}</h1></div>
+    <div class="hero">
+      <svg width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="${done} van 3 momenten ingevuld">
+        <circle class="ring-track" cx="32" cy="32" r="27" fill="none" stroke-width="7"/>
+        <circle cx="32" cy="32" r="27" fill="none" stroke="#E9B53C" stroke-width="7" stroke-linecap="round" stroke-dasharray="${dash} ${C}" transform="rotate(-90 32 32)"/>
+        <text x="32" y="38" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-size="18" font-weight="600" fill="currentColor">${done}/3</text>
+      </svg>
+      <div><b>${headline}</b><span>${subline}</span></div>
+    </div>
+    <div class="stack">${MOM.map(m => momentCard(k, m, m.id === cur)).join('')}</div>`;
+}
+function momentCard(k, m, isNow){
+  const e = entry(k, m.id);
+  if (!e) return `
+    <div class="moment empty">
+      <div class="sw"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${m.id === 'avond' ? '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>' : m.id === 'ochtend' ? '<path d="M12 4v2M4.9 7.9l1.4 1.4M2 15h2M20 15h2M17.7 9.3l1.4-1.4M7 15a5 5 0 0 1 10 0M3 19h18"/>' : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'}</svg></div>
+      <div class="body"><strong>${m.naam}</strong><span class="meta">Gepland om ${S.settings.tijden[m.id]}</span></div>
+      <button class="pill ${isNow ? 'dark' : 'light'}" data-act="checkin" data-k="${k}" data-m="${m.id}">Check in</button>
+    </div>`;
+  const E = EMO[e.emo];
+  const note = e.wat || e.nodig;
+  return `
+    <button class="moment e-${e.emo}" data-act="checkin" data-k="${k}" data-m="${m.id}" aria-label="${m.naam}: ${E.naam}, intensiteit ${e.lvl}. Tik om aan te passen.">
+      <span class="sw"></span>
+      <span class="body">
+        <span class="row"><strong>${m.naam} · ${E.naam}</strong><span class="meta">${esc(e.tijd)}</span></span>
+        <span class="meta">Intensiteit ${e.lvl} van 5${e.lichaam?.length ? ' · ' + esc(e.lichaam.join(', ').toLowerCase()) : ''}</span>
+        ${note ? `<span class="note">${esc(note)}</span>` : ''}
+      </span>
+    </button>`;
+}
+
+/* ---------- Check-in sheet ---------- */
+function openCheckin(k, m){
+  const e = entry(k, m);
+  S.draft = e ? {...JSON.parse(JSON.stringify(e)), k, m, stap:1, bestaand:true, bevestig:false}
+              : {k, m, emo:null, lvl:3, lichaam:[], wat:'', nodig:'', labels:[], stap:1, bestaand:false, bevestig:false};
+  $('#sheet').hidden = false; document.body.style.overflow = 'hidden';
+  renderSheet();
+}
+function closeSheet(){ S.draft = null; $('#sheet').hidden = true; document.body.style.overflow = ''; if (MOM.some(m => '#'+m.id === location.hash)) history.replaceState(null, '', '#vandaag'); render(); }
+function allLabels(){ const s = new Set(['Werk','Thuis','Familie','Gezondheid','Afspraken']); Object.values(S.days).forEach(d => Object.values(d).forEach(e => (e.labels||[]).forEach(l => s.add(l)))); return [...s]; }
+function renderSheet(){
+  const d = S.draft, mom = MOM.find(x => x.id === d.m), dt = parse(d.k);
+  const cls = d.emo ? `e-${d.emo}` : '';
+  let html = `<div class="in ${cls}">
+    <div class="sheet-top">
+      <button class="iconbtn" data-act="${d.stap === 2 ? 'back' : 'close'}" aria-label="${d.stap === 2 ? 'Terug' : 'Sluiten'}">${d.stap === 2
+        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>'
+        : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'}</button>
+      <span class="eyebrow">${mom.naam} · ${fmtShort(dt)}</span>
+      <span class="eyebrow" style="width:44px;text-align:right">${d.stap < 3 ? d.stap + '/2' : ''}</span>
+    </div>`;
+  if (d.stap === 3){
+    const E = EMO[d.emo], done = MOM.filter(x => entry(d.k, x.id)).length;
+    const open = MOM.filter(x => !entry(d.k, x.id));
+    const vervolg = d.k !== key(today()) ? 'Je check-in is bijgewerkt.'
+      : open.length ? `Volgende check-in: ${open[0].naam.toLowerCase()} om ${S.settings.tijden[open[0].id]}.` : 'Alle drie de momenten van vandaag staan erin.';
+    html += `
+    <div class="done" role="status">
+      <span class="check"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <h2>${d.bestaand ? 'Bijgewerkt' : 'Opgeslagen'}</h2>
+      <p>${mom.naam} · ${E.naam} · intensiteit ${d.lvl} van 5${(d.wat || d.nodig) && d.metNotitie ? ' · met notitie' : ''}</p>
+    </div>
+    <div class="progress3" aria-label="${done} van 3 momenten ingevuld">${MOM.map(x => { const e = entry(d.k, x.id);
+      return `<div><span class="sq ${e ? 'e-' + e.emo : 'leeg'}"></span>${x.naam}</div>`; }).join('')}</div>
+    <p class="sub" style="margin:0">${vervolg}</p>
+    <div class="actions"><button class="pill dark grow" data-act="close">Klaar</button></div>`;
+  } else if (d.stap === 1){
+    html += `
+    <h2 class="title" style="font-size:30px">Hoe zit je er nu in?</h2>
+    <div class="emogrid" role="group" aria-label="Kies je gevoel">
+      ${EMO_KEYS.map(x => `<button class="emo e-${x}" data-act="emo" data-v="${x}" aria-pressed="${d.emo === x}"><strong>${EMO[x].naam}</strong><span>${EMO[x].sub}</span></button>`).join('')}
+    </div>
+    <div class="field">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="lbl-strong">Hoe sterk?</span><span class="sub">${d.lvl} · ${NIVEAU[d.lvl]}</span></div>
+      <div class="lvls">${[1,2,3,4,5].map(n => `<button class="${n <= d.lvl ? 'on' : ''}" data-act="lvl" data-v="${n}" aria-label="Intensiteit ${n}" aria-pressed="${n === d.lvl}">${n}</button>`).join('')}</div>
+    </div>
+    <div class="field">
+      <span class="lbl-strong">Waar voel je het? <span class="sub" style="font-weight:400">(optioneel)</span></span>
+      <div class="chips">${LICHAAM.map(b => `<button class="chip" data-act="body" data-v="${b}" aria-pressed="${d.lichaam.includes(b)}">${b}</button>`).join('')}</div>
+    </div>
+    <div class="actions"><button class="pill dark grow" data-act="next" ${d.emo ? '' : 'disabled'}>${d.emo ? 'Verder naar notitie' : 'Kies eerst een gevoel'}</button></div>`;
+  } else {
+    const E = EMO[d.emo];
+    html += `
+    <div class="summary-chip">
+      <div><strong>${E.naam}</strong><span style="font-size:13px">${mom.naam}${d.lichaam.length ? ' · ' + esc(d.lichaam.join(', ').toLowerCase()) : ''}</span></div>
+      <div class="pips" role="img" aria-label="Intensiteit ${d.lvl} van 5">${[1,2,3,4,5].map(n => `<i class="${n <= d.lvl ? 'on' : ''}"></i>`).join('')}</div>
+    </div>
+    <div class="field"><label for="wat">Wat gebeurde er?</label><textarea id="wat" data-in="wat" placeholder="Beschrijf kort de situatie">${esc(d.wat)}</textarea></div>
+    <div class="field"><label for="nodig">Wat had je nodig?</label><textarea id="nodig" data-in="nodig" style="min-height:76px" placeholder="Bijvoorbeeld rust, duidelijkheid of steun">${esc(d.nodig)}</textarea></div>
+    <div class="field">
+      <span class="lbl-strong">Labels</span>
+      <div class="chips">${allLabels().map(l => `<button class="chip" data-act="label" data-v="${esc(l)}" aria-pressed="${d.labels.includes(l)}">${esc(l)}</button>`).join('')}</div>
+      <form data-form="label" style="display:flex;gap:8px"><input type="text" id="nieuwlabel" placeholder="Nieuw label" maxlength="24" aria-label="Nieuw label"><button class="pill light" type="submit">Toevoegen</button></form>
+    </div>
+    ${d.bestaand ? (d.bevestig
+      ? `<div class="confirm"><span>Dit moment verwijderen? Dit kun je niet ongedaan maken.</span><div style="display:flex;gap:8px"><button class="pill light" data-act="nodel">Annuleren</button><button class="pill dark" data-act="del">Verwijderen</button></div></div>`
+      : `<button class="pill ghost" data-act="askdel" style="align-self:flex-start;padding:0">Moment verwijderen</button>`) : ''}
+    <div class="actions">
+      <button class="pill light" data-act="save-skip">Zonder notitie</button>
+      <button class="pill dark grow" data-act="save">Opslaan</button>
+    </div>`;
+  }
+  $('#sheet').innerHTML = html + '</div>';
+}
+function grabText(){ const d = S.draft; if (!d) return; const w = $('#wat'), n = $('#nodig'); if (w) d.wat = w.value; if (n) d.nodig = n.value; }
+async function commit(withNote){
+  grabText();
+  const d = S.draft;
+  const rec = {emo:d.emo, lvl:d.lvl, lichaam:d.lichaam, wat:withNote ? d.wat.trim() : '', nodig:withNote ? d.nodig.trim() : '', labels:withNote ? d.labels : [], tijd:d.bestaand && d.tijd ? d.tijd : nowTime()};
+  S.days[d.k] = Object.assign({}, S.days[d.k] || {}, {[d.m]:rec});
+  d.stap = 3; d.metNotitie = withNote; d.bevestig = false;
+  renderSheet(); $('#sheet').scrollTop = 0;
+  await saveDay(d.k);
+}
+
+$('#sheet').addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-act]'); if (!b || !S.draft) return;
+  const d = S.draft, a = b.dataset.act, v = b.dataset.v;
+  grabText();
+  if (a === 'close') return closeSheet();
+  if (a === 'back'){ d.stap = 1; d.bevestig = false; }
+  if (a === 'emo') d.emo = v;
+  if (a === 'lvl') d.lvl = +v;
+  if (a === 'body') d.lichaam = d.lichaam.includes(v) ? d.lichaam.filter(x => x !== v) : [...d.lichaam, v];
+  if (a === 'next' && d.emo){ d.stap = 2; }
+  if (a === 'label') d.labels = d.labels.includes(v) ? d.labels.filter(x => x !== v) : [...d.labels, v];
+  if (a === 'askdel') d.bevestig = true;
+  if (a === 'nodel') d.bevestig = false;
+  if (a === 'del'){ const k = d.k; if (S.days[k]) { delete S.days[k][d.m]; } closeSheet(); toast('Moment verwijderd'); await saveDay(k); return; }
+  if (a === 'save') return commit(true);
+  if (a === 'save-skip') return commit(false);
+  const sy = $('#sheet').scrollTop; renderSheet(); $('#sheet').scrollTop = sy;
+  if (a === 'next') $('#sheet').scrollTop = 0;
+});
+$('#sheet').addEventListener('submit', ev => {
+  ev.preventDefault(); grabText();
+  const i = $('#nieuwlabel'); const v = (i?.value || '').trim(); if (!v) return;
+  const d = S.draft; if (!d.labels.includes(v)) d.labels.push(v);
+  renderSheet(); setTimeout(() => $('#nieuwlabel')?.focus(), 0);
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && S.draft) closeSheet(); });
+
+/* ---------- Statistics ---------- */
+function rangeDays(van, tot){ const out = []; for (let d = new Date(van); d <= tot; d = addDays(d,1)) out.push(new Date(d)); return out; }
+function stats(days){
+  const count = {bang:0,boos:0,blij:0,bedroefd:0}, perMom = {ochtend:{},middag:{},avond:{}}; let total = 0; const notes = [];
+  days.forEach(dt => { const k = key(dt); MOM.forEach(m => { const e = entry(k, m.id); if (!e) return; total++; count[e.emo]++; perMom[m.id][e.emo] = (perMom[m.id][e.emo]||0)+1;
+    if (e.wat || e.nodig) notes.push({dt, m, e}); }); });
+  return {count, perMom, total, notes};
+}
+function patterns(st){
+  const out = [];
+  MOM.forEach(m => { const pm = st.perMom[m.id]; const best = Object.entries(pm).sort((a,b) => b[1]-a[1])[0];
+    if (best && best[1] >= 2) out.push(`’s ${m.naam.toLowerCase() === 'ochtend' ? 'Ochtends' : m.naam.toLowerCase() === 'middag' ? 'Middags' : 'Avonds'} voel je je het vaakst <strong>${EMO[best[0]].naam.toLowerCase()}</strong> (${best[1]}×).`); });
+  return out;
+}
+
+/* ---------- Overzicht ---------- */
+function viewOverview(){
+  const t = today(), n = S.periode === 'week' ? 7 : 28;
+  const end = addDays(t, (7 - ((t.getDay()+6)%7) - 1)); // Sunday of this week
+  const start = addDays(end, -(n-1));
+  const all = rangeDays(start, end);
+  const past = all.filter(d => d <= t);
+  const st = stats(past);
+  const max = Math.max(1, ...Object.values(st.count));
+  const pats = patterns(st);
+  const cells = all.map(d => {
+    const k = key(d), fut = d > t;
+    return `<div class="day"><small>${d.toLocaleDateString('nl-NL',{weekday:'short'}).slice(0,2)} ${d.getDate()}</small>${MOM.map(m => { const e = entry(k, m.id);
+      return e ? `<span class="dot e-${e.emo}" title="${m.naam}: ${EMO[e.emo].naam} ${e.lvl}/5"></span>` : `<span class="dot ${fut ? 'future' : 'none'}"></span>`; }).join('')}</div>`; }).join('');
+  return `
+    <h1 class="title">Overzicht</h1>
+    <div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))" role="group" aria-label="Periode">
+      <button data-act="per" data-v="week" aria-pressed="${S.periode === 'week'}">Deze week</button>
+      <button data-act="per" data-v="maand" aria-pressed="${S.periode === 'maand'}">4 weken</button>
+    </div>
+    <div class="card stack">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><strong>${start.getDate()} ${start.toLocaleDateString('nl-NL',{month:'short'})} – ${end.getDate()} ${end.toLocaleDateString('nl-NL',{month:'short'})}</strong><span class="sub" style="font-size:12px">Ochtend · middag · avond</span></div>
+      <div class="grid7">${cells}</div>
+    </div>
+    ${st.total ? `
+    <div class="card stack">
+      <strong>Verdeling · ${st.total} ${st.total === 1 ? 'moment' : 'momenten'}</strong>
+      ${EMO_KEYS.map(x => `<div class="bar e-${x}"><span class="lbl">${EMO[x].naam}</span><span class="trk"><span class="fill" style="display:block;width:${st.count[x]/max*100}%"></span></span><span class="n">${st.count[x]}×</span></div>`).join('')}
+    </div>
+    ${pats.length ? `<div class="insight"><span class="eyebrow">Patroon</span>${pats.map(p => `<span>${p}</span>`).join('')}</div>` : ''}
+    ${st.notes.length ? `<div class="stack"><strong>Notities</strong>${st.notes.slice(-6).reverse().map(({dt,m,e}) => `
+      <div class="notecard e-${e.emo}"><span class="meta">${cap(fmtShort(dt))} · ${m.naam.toLowerCase()} · ${EMO[e.emo].naam} ${e.lvl}/5</span>${e.wat ? `<span>${esc(e.wat)}</span>` : ''}${e.nodig ? `<span class="sub">Nodig: ${esc(e.nodig)}</span>` : ''}</div>`).join('')}</div>` : ''}
+    ` : `<div class="empty-state">Nog geen check-ins in deze periode. Zodra je bij Vandaag inchecken, zie je hier je kleuren, de verdeling over de vier B's en terugkerende patronen.</div>`}`;
+}
+
+/* ---------- Samenvatting ---------- */
+function samRange(){
+  const t = today(), mon = addDays(t, -((t.getDay()+6)%7));
+  const k = S.sam.keuze;
+  if (k === 'deze-week') return [mon, addDays(mon,6)];
+  if (k === 'vorige-week') return [addDays(mon,-7), addDays(mon,-1)];
+  if (k === '30') return [addDays(t,-29), t];
+  const van = S.sam.van ? parse(S.sam.van) : addDays(t,-6), tot = S.sam.tot ? parse(S.sam.tot) : t;
+  return van <= tot ? [van, tot] : [tot, van];
+}
+function viewSummary(){
+  const [van, tot] = samRange(); const st = stats(rangeDays(van, tot));
+  const opts = [['deze-week','Deze week'],['vorige-week','Vorige week'],['30','Laatste 30 dagen'],['eigen','Eigen periode']];
+  return `
+    <h1 class="title">Samenvatting</h1>
+    <p class="sub" style="margin:0">Maak een nette PDF van je check-ins om te bewaren, te printen of te delen.</p>
+    <div class="field"><label for="periode">Periode</label>
+      <select id="periode" data-sam="keuze">${opts.map(([v,l]) => `<option value="${v}" ${S.sam.keuze === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    ${S.sam.keuze === 'eigen' ? `<div class="range"><div class="field"><label for="van">Van</label><input type="date" id="van" data-sam="van" value="${S.sam.van || key(van)}"></div><div class="field"><label for="tot">Tot en met</label><input type="date" id="tot" data-sam="tot" value="${S.sam.tot || key(tot)}"></div></div>` : ''}
+    <div class="preview">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><strong style="font-family:var(--display);font-size:18px">Gevoelsoverzicht</strong><span class="sub">${fmtDate(van)} – ${fmtDate(tot)}</span></div>
+      ${st.total ? `<div class="stackbar">${EMO_KEYS.filter(x => st.count[x]).map(x => `<span class="e-${x}" style="flex:${st.count[x]}"></span>`).join('')}</div>
+      <div class="legend">${EMO_KEYS.map(x => `<span class="e-${x}"><i></i>${EMO[x].naam} ${Math.round(st.count[x]/st.total*100)}%</span>`).join('')}</div>
+      <span class="sub">${st.total} check-ins · ${st.notes.length} met notitie</span>` : `<span class="sub">Er zijn nog geen check-ins in deze periode. Kies een andere periode of check eerst in.</span>`}
+    </div>
+    <div class="card" style="padding:0 16px">
+      <div class="toggle"><label for="naam" style="font-size:15px;flex-shrink:0">Naam op de PDF</label><input type="text" id="naam" data-set="naam" value="${esc(S.settings.naam)}" placeholder="Optioneel" style="max-width:190px;border:none;background:transparent;text-align:right;padding:0"></div>
+      <label class="toggle">Notities meenemen<input type="checkbox" id="opt-notities" data-sam-chk="notities" ${S.sam.notities ? 'checked' : ''}></label>
+      <label class="toggle">Waar je het voelde<input type="checkbox" id="opt-lichaam" data-sam-chk="lichaam" ${S.sam.lichaam ? 'checked' : ''}></label>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      <button class="pill light" data-act="copy" ${st.total ? '' : 'disabled'} style="height:54px;border-radius:27px">Kopieer als tekst</button>
+      <button class="pill dark" data-act="pdf" ${st.total ? '' : 'disabled'} style="height:54px;border-radius:27px">Deel of print PDF</button>
+    </div>
+    <p class="sub" style="margin:0">De PDF opent in het deelmenu van je iPhone. Kies Print voor AirPrint, of stuur hem met Mail of Berichten.</p>`;
+}
+function textSummary(){
+  const [van, tot] = samRange(); const days = rangeDays(van, tot); const st = stats(days);
+  const L = [`Gevoelsoverzicht ${fmtDate(van)} – ${fmtDate(tot)}${S.settings.naam ? ' · ' + S.settings.naam : ''}`, ''];
+  L.push(EMO_KEYS.map(x => `${EMO[x].naam}: ${st.count[x]}× (${st.total ? Math.round(st.count[x]/st.total*100) : 0}%)`).join(' · '), '');
+  days.forEach(dt => { const k = key(dt); const parts = MOM.map(m => { const e = entry(k, m.id); return e ? `${m.naam.toLowerCase()} ${EMO[e.emo].naam.toLowerCase()} ${e.lvl}/5` : null; }).filter(Boolean);
+    if (parts.length) L.push(`${cap(fmtShort(dt))}: ${parts.join(', ')}`); });
+  if (S.sam.notities && st.notes.length){ L.push('', 'Notities');
+    st.notes.forEach(({dt,m,e}) => { L.push(`- ${cap(fmtShort(dt))}, ${m.naam.toLowerCase()} (${EMO[e.emo].naam} ${e.lvl}/5)${S.sam.lichaam && e.lichaam?.length ? ', voelde het in: ' + e.lichaam.join(', ').toLowerCase() : ''}`);
+      if (e.wat) L.push(`  Wat gebeurde er: ${e.wat}`); if (e.nodig) L.push(`  Wat had ik nodig: ${e.nodig}`); }); }
+  return L.join('\n');
+}
+function hexRgb(h){ const n = parseInt(h.slice(1),16); return [n>>16, (n>>8)&255, n&255]; }
+async function makePdf(){
+  if (!window.jspdf){ toast('De PDF-maker is nog niet geladen. Open de app één keer met internet en probeer het opnieuw.'); return; }
+  const [van, tot] = samRange(); const days = rangeDays(van, tot); const st = stats(days);
+  const doc = new window.jspdf.jsPDF({unit:'mm', format:'a4'});
+  const W = 210, M = 18; let y = 20, page = 1;
+  const ink = [21,23,28], muted = [94,97,104], line = [228,225,218];
+  const footer = () => { doc.setFontSize(8); doc.setTextColor(...muted); doc.text('Gevoelskompas · persoonlijk overzicht · vertrouwelijk', M, 289); doc.text(`Pagina ${page}`, W-M, 289, {align:'right'}); };
+  const need = h => { if (y + h > 280){ footer(); doc.addPage(); page++; y = 20; } };
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...muted); doc.text('GEVOELSKOMPAS · OVERZICHT', M, y);
+  if (S.settings.naam){ doc.setFont('helvetica','bold'); doc.setTextColor(...ink); doc.text(S.settings.naam, W-M, y, {align:'right'}); }
+  y += 9; doc.setFontSize(20); doc.setTextColor(...ink); doc.text(`${fmtDate(van)} – ${fmtDate(tot)}`, M, y);
+  y += 6; doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...muted);
+  doc.text(`${st.total} check-ins · ${st.notes.length} met notitie · gemaakt op ${fmtDate(new Date())}`, M, y);
+  y += 4; doc.setDrawColor(...ink); doc.setLineWidth(0.6); doc.line(M, y, W-M, y); y += 8;
+  const bw = (W - 2*M - 3*4)/4;
+  EMO_KEYS.forEach((x,i) => { const bx = M + i*(bw+4); const c = hexRgb(EMO[x].hex);
+    doc.setFillColor(246,245,242); doc.roundedRect(bx, y, bw, 26, 2, 2, 'F'); doc.setFillColor(...c); doc.rect(bx, y, bw, 1.6, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...ink); doc.text(EMO[x].naam, bx+4, y+8);
+    doc.setFontSize(18); doc.text(`${st.total ? Math.round(st.count[x]/st.total*100) : 0}%`, bx+4, y+17);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted); doc.text(`${st.count[x]} van ${st.total} momenten`, bx+4, y+22.5); });
+  y += 34;
+  const pats = patterns(st).map(p => p.replace(/<[^>]+>/g,'').replace('’','\''));
+  if (pats.length){ doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...ink); doc.text('Patronen', M, y); y += 6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); pats.forEach(p => { doc.text(p, M, y); y += 5.5; }); y += 4; }
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...ink); doc.text('Per dag', M, y); y += 6;
+  const cw = (W - 2*M - 26 - 3*3)/3;
+  doc.setFontSize(7.5); doc.setTextColor(...muted); MOM.forEach((m,i) => doc.text(m.naam.toUpperCase(), M+26+i*(cw+3), y)); y += 3;
+  days.forEach(dt => { const k = key(dt); need(9);
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...ink); doc.text(cap(fmtShort(dt)), M, y+5);
+    MOM.forEach((m,i) => { const cx = M+26+i*(cw+3); const e = entry(k, m.id);
+      doc.setFillColor(246,245,242); doc.roundedRect(cx, y, cw, 7.5, 1.5, 1.5, 'F');
+      if (e){ doc.setFillColor(...hexRgb(EMO[e.emo].hex)); doc.circle(cx+4, y+3.75, 1.6, 'F');
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...ink); doc.text(EMO[e.emo].naam, cx+7.5, y+5);
+        doc.setTextColor(...muted); doc.text(`${e.lvl}/5`, cx+cw-3, y+5, {align:'right'}); }
+      else { doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(185,181,172); doc.text('–', cx+4, y+5); } });
+    y += 9; });
+  if (S.sam.notities && st.notes.length){ y += 5; need(14); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...ink); doc.text('Notities', M, y); y += 6;
+    st.notes.forEach(({dt,m,e}) => {
+      const tw = W - 2*M - 6; doc.setFontSize(10);
+      const body = [];
+      if (e.wat) body.push(...doc.splitTextToSize(`Wat gebeurde er: ${e.wat}`, tw));
+      if (e.nodig) body.push(...doc.splitTextToSize(`Wat had ik nodig: ${e.nodig}`, tw));
+      const h = 8 + body.length*4.8 + 3; need(h);
+      doc.setFillColor(246,245,242); doc.rect(M, y, W-2*M, h, 'F'); doc.setFillColor(...hexRgb(EMO[e.emo].hex)); doc.rect(M, y, 1.4, h, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+      doc.text(`${cap(fmtShort(dt))} · ${m.naam.toLowerCase()} · ${EMO[e.emo].naam} ${e.lvl}/5${S.sam.lichaam && e.lichaam?.length ? ' · ' + e.lichaam.join(', ').toLowerCase() : ''}`, M+5, y+5.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...ink); doc.text(body, M+5, y+10.5);
+      y += h + 3; }); }
+  footer();
+  const blob = doc.output('blob');
+  await shareFile(new Blob([blob], {type:'application/pdf'}), `Gevoelsoverzicht ${key(van)} tot ${key(tot)}.pdf`, 'Gevoelsoverzicht');
+}
+
+/* ---------- Herinneringen ---------- */
+function viewReminders(){
+  const vormen = [['melding','Melding'],['wekker','Wekker'],['uit','Uit']];
+  return `
+    <div class="stack" style="gap:4px"><h1 class="title">Herinneringen</h1><span class="sub">Kies per moment een tijd en hoe je eraan herinnerd wilt worden.</span></div>
+    ${MOM.map(m => `
+      <div class="card stack" style="gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><label for="t-${m.id}" class="lbl-strong">${m.naam}</label><input type="time" id="t-${m.id}" data-time="${m.id}" value="${S.settings.tijden[m.id]}"></div>
+        <div class="seg" style="grid-template-columns:repeat(3,minmax(0,1fr))" role="group" aria-label="Soort herinnering ${m.naam.toLowerCase()}">
+          ${vormen.map(([v,l]) => `<button class="${v === 'wekker' ? 'alarm' : ''}" data-act="vorm" data-m="${m.id}" data-v="${v}" aria-pressed="${S.settings.vorm[m.id] === v}">${l}</button>`).join('')}
+        </div>
+      </div>`).join('')}
+    <div class="card stack" style="gap:8px">
+      <strong>Zo werkt het in deze conceptversie</strong>
+      <span class="sub">Je tijden bepalen de planning op Vandaag. De webversie kan zelf nog geen meldingen of wekkers afgaan; dat komt in de iPhone-app. Tot die tijd: een melding zet je in de Herinneringen-app, een wekker in de Klok-app, op dezelfde tijden.</span>
+    </div>
+    <div class="card stack" style="gap:10px">
+      <strong>Je gegevens</strong>
+      <span class="sub">Je check-ins staan alleen op deze iPhone. Maak af en toe een back-up en bewaar die in Bestanden of iCloud Drive.</span>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+        <button class="pill dark" data-act="backup">Back-up maken</button>
+        <label class="pill light" for="herstel" style="cursor:pointer">Terugzetten</label>
+      </div>
+      <input type="file" id="herstel" accept="application/json,.json" hidden>
+    </div>`;
+}
+
+/* ---------- page events ---------- */
+$('#view').addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act;
+  if (a === 'checkin') return openCheckin(b.dataset.k, b.dataset.m);
+  if (a === 'per'){ S.periode = b.dataset.v; return render(); }
+  if (a === 'vorm'){ S.settings.vorm[b.dataset.m] = b.dataset.v; render(); toast(b.dataset.v === 'uit' ? 'Herinnering uit' : 'Opgeslagen'); return saveSettings(); }
+  if (a === 'pdf') return makePdf();
+  if (a === 'backup') return backup();
+  if (a === 'copy'){ const t = textSummary();
+    try { await navigator.clipboard.writeText(t); toast('Gekopieerd'); }
+    catch(e){ const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('aria-label','Samenvatting als tekst'); ta.style.minHeight = '220px'; b.closest('div').after(ta); ta.focus(); ta.select(); toast('Selecteer en kopieer de tekst hieronder'); } }
+});
+$('#view').addEventListener('change', ev => {
+  const el = ev.target;
+  if (el.dataset.time){ if (el.value){ S.settings.tijden[el.dataset.time] = el.value; saveSettings(); toast('Tijd opgeslagen'); } }
+  if (el.dataset.sam){ S.sam[el.dataset.sam] = el.value; render(); }
+  if (el.dataset.samChk){ S.sam[el.dataset.samChk] = el.checked; }
+  if (el.dataset.set === 'naam'){ S.settings.naam = el.value.trim(); saveSettings(); }
+  if (el.id === 'herstel' && el.files[0]){ restore(el.files[0]); el.value = ''; }
+});
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
+init();
+})();
+</script>
+</body>
+</html>
