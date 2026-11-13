@@ -246,19 +246,21 @@ async function backup(){
   const data = JSON.stringify({app:'gevoelskompas', versie:1, gemaakt:new Date().toISOString(), days:S.days, settings:S.settings}, null, 1);
   await shareFile(new Blob([data], {type:'application/json'}), `Gevoelskompas back-up ${key(today())}.json`, 'Gevoelskompas back-up');
 }
+function restoreText(txt){
+  try {
+    const d = JSON.parse(String(txt).trim());
+    if (!d || typeof d.days !== 'object') throw 0;
+    const merged = Object.assign({}, S.days);
+    Object.entries(d.days).forEach(([k, mom]) => { merged[k] = Object.assign({}, merged[k] || {}, mom); });
+    applyData({days:merged, settings:Object.assign({}, S.settings, d.settings || {}, {naam:(d.settings && d.settings.naam) || S.settings.naam})});
+    lsSet(); render();
+    toast(`Back-up teruggezet: ${Object.keys(d.days).length} dagen`);
+    return true;
+  } catch(e){ toast('Dit is geen Gevoelskompas-back-up. Kopieer de hele tekst en probeer opnieuw.'); return false; }
+}
 function restore(file){
   const r = new FileReader();
-  r.onload = () => {
-    try {
-      const d = JSON.parse(r.result);
-      if (!d || typeof d.days !== 'object') throw 0;
-      const merged = Object.assign({}, S.days);
-      Object.entries(d.days).forEach(([k, mom]) => { merged[k] = Object.assign({}, merged[k] || {}, mom); });
-      applyData({days:merged, settings:d.settings || S.settings});
-      lsSet(); render();
-      toast(`Back-up teruggezet: ${Object.keys(d.days).length} dagen`);
-    } catch(e){ toast('Dit bestand is geen Gevoelskompas-back-up.'); }
-  };
+  r.onload = () => restoreText(r.result);
   r.readAsText(file);
 }
 async function saveSettings(){
@@ -616,6 +618,9 @@ function viewReminders(){
         <label class="pill light" for="herstel" style="cursor:pointer">Terugzetten</label>
       </div>
       <input type="file" id="herstel" accept="application/json,.json" hidden>
+      <label for="plak" class="sub" style="margin-top:4px">Of plak hier de tekst van een back-up:</label>
+      <textarea id="plak" placeholder="{&quot;app&quot;:&quot;gevoelskompas&quot;, …}" style="min-height:70px;font-size:14px"></textarea>
+      <button class="pill light" data-act="plak">Tekst terugzetten</button>
     </div>
     <p class="sub" style="margin:0;font-size:12px;text-align:center">Gevoelskompas · © 2026 Joeri Reesink · Alle rechten voorbehouden</p>`;
 }
@@ -629,6 +634,7 @@ $('#view').addEventListener('click', async ev => {
   if (a === 'vorm'){ S.settings.vorm[b.dataset.m] = b.dataset.v; render(); toast(b.dataset.v === 'uit' ? 'Herinnering uit' : 'Opgeslagen'); return saveSettings(); }
   if (a === 'pdf') return makePdf();
   if (a === 'backup') return backup();
+  if (a === 'plak'){ const t = $('#plak'); if (t && t.value.trim()) restoreText(t.value); else toast('Plak eerst de tekst van je back-up.'); return; }
   if (a === 'copy'){ const t = textSummary();
     try { await navigator.clipboard.writeText(t); toast('Gekopieerd'); }
     catch(e){ const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('aria-label','Samenvatting als tekst'); ta.style.minHeight = '220px'; b.closest('div').after(ta); ta.focus(); ta.select(); toast('Selecteer en kopieer de tekst hieronder'); } }
