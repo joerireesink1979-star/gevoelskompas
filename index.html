@@ -618,6 +618,7 @@ function viewReminders(){
         <label class="pill light" for="herstel" style="cursor:pointer">Terugzetten</label>
       </div>
       <input type="file" id="herstel" accept="application/json,.json" hidden>
+      <button class="pill dark" data-act="klembord">Zet back-up terug van klembord</button>
       <label for="plak" class="sub" style="margin-top:4px">Of plak hier de tekst van een back-up:</label>
       <textarea id="plak" placeholder="{&quot;app&quot;:&quot;gevoelskompas&quot;, …}" style="min-height:70px;font-size:14px"></textarea>
       <button class="pill light" data-act="plak">Tekst terugzetten</button>
@@ -634,6 +635,11 @@ $('#view').addEventListener('click', async ev => {
   if (a === 'vorm'){ S.settings.vorm[b.dataset.m] = b.dataset.v; render(); toast(b.dataset.v === 'uit' ? 'Herinnering uit' : 'Opgeslagen'); return saveSettings(); }
   if (a === 'pdf') return makePdf();
   if (a === 'backup') return backup();
+  if (a === 'klembord'){
+    try { const t = await navigator.clipboard.readText(); if (t && t.trim()) { restoreText(t); return; } toast('Je klembord is leeg. Kopieer eerst je back-up.'); }
+    catch(e){ toast('Plakken lukte niet. Plak de tekst in het veld eronder.'); $('#plak')?.focus(); }
+    return;
+  }
   if (a === 'plak'){ const t = $('#plak'); if (t && t.value.trim()) restoreText(t.value); else toast('Plak eerst de tekst van je back-up.'); return; }
   if (a === 'copy'){ const t = textSummary();
     try { await navigator.clipboard.writeText(t); toast('Gekopieerd'); }
@@ -647,7 +653,7 @@ $('#view').addEventListener('change', ev => {
   if (el.dataset.set === 'naam'){ S.settings.naam = el.value.trim(); saveSettings(); }
   if (el.id === 'herstel' && el.files[0]){ restore(el.files[0]); el.value = ''; }
 });
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).then(r => r.update()).catch(() => {}));
 
 init();
 })();
